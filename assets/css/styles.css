@@ -53,6 +53,11 @@ p, a {
     font-family: "Inter", serif;    
 }
 
+.date {
+    font-style: italic;
+    color: var(--accent-grey);
+}
+
 a {
     color: var(--accent-orange);
 }
