@@ -32,3 +32,8 @@ a {
     color: var(--accent-orange);
 }
 
+nav a {
+    color:var(--accent-orange);
+    margin-right: 2%;
+    text-decoration: none;
+}
