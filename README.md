@@ -17,10 +17,10 @@ Default page skeleton:
 <body>
     <h1 class="title">Troy Lopez</h1> <!--change things here!-->
     <nav class="header">
-        <a href="/dne.html">About</a>
-        <a href="/dne.html">Blog</a>
-        <a href="/dne.html">Projects</a>
-        <a href="/dne.html">Links</a>
+        <a href="/menu/about.html">About</a>
+        <a href="/menu/blog.html">Blog</a>
+        <a href="/menu/projects.html">Projects</a>
+        <a href="/menu/links.html">Links</a>
     </nav>
     <h2>Header goes here!</h2>
     <p>body here</p>
