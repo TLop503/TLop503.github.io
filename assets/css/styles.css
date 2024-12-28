@@ -39,7 +39,7 @@ li {
 }
 
 
-h1, h2 {
+h1, h2, h3 {
    color:var(--title-orange);
    font-family: "Space Mono", serif;
    line-height: .7;
