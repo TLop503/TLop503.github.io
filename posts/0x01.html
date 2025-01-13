@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>/posts/0x01</title> <!--Change things here!-->
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1 class="title">Troy Lopez</h1> <!--Change things here!-->
+    <nav class="header">
+        <a href="/menu/about.html">About</a>
+        <a href="/menu/blog.html">Blog</a>
+        <a href="/menu/projects.html">Projects</a>
+        <a href="/menu/links.html">Links</a>
+    </nav>
+    <h2>Scuffed Selfhosting for Shared Spaces</h2>
+    <p class="date">Or, setting up a server instead of putting away my dishes</p>
+    <hr>
+    <p>As a broke college student, I share a house with a few roommates. We get along well, but organizing groceries and chores is always a bit tricky. Traditional rotating chore lists or notes on a whiteboard in the kitchen would work, but would also be too easy. As an alternative to occupying the majority of the whiteboard I like to use for homework with "TODO: buy (more) bananas," I reconfigured my old laptop into a sort of server running self-hosted apps for things like groceries and chores (among other things out of scope for this post). This is a combination of a blog post about the setup process and a loose tutorial in case you experience any of the same pitfalls I did.</p>
+    <h3>Hardware</h3>
+    <p>I have an old laptop that I recently converted into a Linux box (running Kubuntu) that I'd been using as my primary at-home workstation. However, after spending a few months relying on Microsoft's system for running a Minecraft Realm, I realized having an on-prem hosting solution for the household would be nice. I opened up port 22 and tweaked the power management settings to keep the device alive while closed, and called it a day.</p>
+    <h3>Networking</h3>
+    <p>This is where things got a lot more complicated. In order to avoid having to redistribute an IP address every so often, invalidating old bookmarks, I needed a static IP. IP addresses are issued using <a href="https://en.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol">DHCP</a>, a protocol that allocates an address within your subnet to each connected device. However, for most home networks IP addresses rotate every 2 weeks or so, which is inconvenient for our needs. I use Xfinity + their hardware for internet (again, college student), so configuring this on-router was a no-go. Setting this up on Linux is a bit tricky; I wasn't able to easily find an authoritative source on what configuration files need to be changed. For my configuration it ended up being <code>/etc/netplan/longstringofstuff.yaml</code>. By default, this configuration has DHCP enabled, and uses the default router DNS. Also, my system is using <code>netplan</code>; other systems may need different configurations. To convert to a static IP, we need to make these changes:</p>
+    <pre><code>
+        network:
+            version: 2
+            wifis:
+              NM-<example-uuid>:
+                renderer: networkd
+                match:
+                  name: "wlo1"
+                dhcp4: false # this is where we disable DHCP
+                dhcp6: false
+                addresses:
+                  - <yournetwork>/24 # make sure to use the relevant subnet mask
+                routes:
+                  - to: default
+                    via: <yournetwork>
+                nameservers:
+                  addresses:
+                    # you can use any DNS you prefer here
+                    - 8.8.8.8 # Google DNS
+                    - 1.1.1.1 # Cloudflare DNS
+                access-points:
+                  "Example_SSID":
+                    auth:
+                      key-management: "psk"
+                    networkmanager:
+                      uuid: "<example-uuid>"
+                      name: "Example_SSID"
+                      passthrough:
+                        connection.permissions: "user:<username>;"
+                        wifi-security.auth-alg: "open"
+                        wifi-security.leap-password-flags: "1"
+                        wifi-security.psk-flags: "1"
+    </code></pre>
+    <p>Once this is done, run <code>sudo netplan try</code> to verify everything is set up properly. When ready, you can run <code>sudo netplan apply</code> to ship the changes. <b>Important Note!</b> If you are deploying these changes over SSH your session <i>may</i> timeout. Make sure you have a way back in case something goes wrong; I am not liable if you lock yourself out.</p>
+    <h3>Adding a Homepage</h3>
+    <p>If you plan to run multiple webapps on your box, you might find it useful to have a homepage with links to each one. This is especially important if you are unable to change DNS to give your on-prem server a hostname (though I have a workaround for this towards the bottom). You'll want a web server that is always up; I chose Nginx, but there are countless options. Install your web server, and toss an <code>index.html</code> into the relevant directory with some links to different ports you plan to use, and call it a day.</p>
+    <h3>Selfhosting</h3>
+    <p>At this point you will want to install your apps/containers. I spent a few hours wrestling PHP in an attempt to get Grocy to work before settling on <a href="https://donetick.com/">Donetick</a> as an easy starting place for to-do lists. Each app is different, so I won't attempt to overgeneralize installations here, but I personally have found Dockerized services to be the easiest to set up. These apps usually only require a basic config file specifying ports and directories to use, and then just magically work through containers. My list of apps to set up next includes a calendar for tracking when we are at different events or exams, a grocery management system (can't forget those bananas), and migrating our Minecraft world on-prem. While the initial setup is a bit tricky, I've found that having all your data stay within your network is nice, and makes it a lot easier to agree on a platform or service to use when you don't have to worry about creating new accounts and being permanently added to obnoxious mailing lists. Thank you for taking the time to read all this, and good luck with setting up your own homelab!</p>
+    <h3>Epilogue - <code>/etc/hosts</code></h3>
+    <p>If you are unable to mess with DNS settings for your whole network, adding a line to your <code>/etc/hosts</code> file (or Windows equivalent) mapping your server IP to an easy-to-remember name should let you avoid having to keep track of your IP. It's a lot easier to throw <code>my.home</code> or similar into a browser than it is to memorize an IP.</p>
+    <hr>
+    <p class="date">1/12/25</p>
+</body>
+</html>
