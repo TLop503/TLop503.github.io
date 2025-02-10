@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>/posts/0x02</title> <!--Change things here!-->
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1 class="title">Troy Lopez</h1> <!--Change things here!-->
+    <nav class="header">
+        <a href="/menu/about.html">About</a>
+        <a href="/menu/blog.html">Blog</a>
+        <a href="/menu/projects.html">Projects</a>
+        <a href="/menu/links.html">Links</a>
+    </nav>
+    <h2>LaCTF Writeup - RSAaaS</h2>
+    <p class="date">Crypto / 324 Solves / 234 Points</p>
+    <hr>
+    <img src="../assets/imgs/image.png" alt="Screenshot of LaCTF listing for the RSAaaS Challenge">
+    <hr>
+    <h3>Challenge Description:</h3>
+    <p>Source <a href="https://github.com/uclaacm/lactf-archive/tree/main/2025/crypto/rsaaas">here</a>. RSAaaS required you to trigger an exception in a Python script that takes RSA constants <code>P, Q</code> as inputs and enables encryption and decryption of messages. Nearly all of the code is wrapped in try-except statements to prevent errors, so a simple bad input won't reach the vulnerable section of the code:</p>
+    
+    <p>This gives us a pretty limited number of places to throw an exception. The majority of the code is safe, with exceptions anticipated by catch statements. The only outlier is the calculation of φ(n) and d. If we can trigger an error in the <code>pow()</code> call, we can force an exception and get the flag. This happens when computing the <i>modular inverse</i> of <code>e mod φ(n)</code>. The modular inverse only exists if e and φ(n) are coprime. If they are not, the decryption function is undefined, leading to a failure. (See this <a href="https://crypto.stackexchange.com/questions/12255/in-rsa-why-is-it-important-to-choose-e-so-that-it-is-coprime-to-%CF%86n">StackExchange post</a> for a deeper dive into the math.)</p>
+
+    <h3>The Exploit</h3>
+    <p>To trigger this exception, we need <code>p, q</code> such that φ(n) is **not** coprime to e. A brute-force search for such values would take an impractical amount of time, as there are roughly 2.08e34 possible prime pairs. Instead, we can refine our search by ensuring that <code>p - 1</code> and <code>q - 1</code> are always divisible by <code>e</code>. This guarantees that <code>gcd(e, φ(n)) = e</code>, making the modular inverse calculation fail.</p>
+    
+    <pre><code>
+        func generatePrime(bits int) *big.Int {
+            // We want p = e*k + 1 to be prime
+            // This ensures e divides p-1
+            for {
+                // Generate k with appropriate size
+                bound := new(big.Int).Lsh(big.NewInt(1), uint(bits-17))
+                k, err := rand.Int(rand.Reader, bound)
+                if err != nil {
+                    panic(err)
+                }
+        
+                // Calculate p = e*k + 1
+                p := new(big.Int).Mul(big.NewInt(e), k)
+                p.Add(p, big.NewInt(1))
+        
+                // Check if p is in valid range (63-64 bits) and prime
+                if p.BitLen() == 64 && p.ProbablyPrime(20) {
+                    return p
+                }
+            }
+        }
+    </code></pre>
+    
+    <h3>Actions on Objectives</h3>
+    <p>Now that we have a way to generate primes that **guarantee** φ(n) is not coprime to e, we can automate our search for valid values of p and q. We can verify success by computing <code>gcd(e, φ(n))</code> and confirming that it equals e. Once we have such primes, we can input them into the challenge service and trigger the exception to receive the flag.</p>
+
+    <p>My full solution script can be found <a href="../assets/code/rsaaas.go">here</a>.</p>
+
+    <p>We can take our generated values and punch them into the remote for the flag!</p>
+    <pre><code>
+        Finding suitable primes...
+        Found primes:
+        p = 9223416257379056749
+        q = 9223373135414314561
+        gcd(e, φ(n)) = 65537
+        tlop@blackwall:~$ nc chall.lac.tf 31176
+        Welcome to my RSA as a Service!
+        Pass me two primes and I'll do the rest for you.
+        Let's keep the primes at a 64-bit size, please.
+        Input p:  9223401798050494063
+        Input q: 9223456918375053227
+        Oh no! My service! Please don't give us a bad review!
+        Here, have a complimentary flag for your troubles.
+        <b>lactf{actually_though_whens_the_last_time_someone_checked_for_that}</b>
+    </code></pre>
+
+    <h3>Epilogue</h3>
+    <p>This was a really interesting challenge. My cryptography class is about to cover **asymmetric cryptography**, but since we haven't yet, I had to do a fair bit of research to understand how RSA works under the hood. I initially wrote a Python script to find valid p and q values, but it was too slow, so I optimized the process using Go. This challenge gave me a much better understanding of RSA, and I look forward to learning more about the underlying math.</p>
+    
+    <p class="date">2/9/25</p>
+</body>
+</html>
