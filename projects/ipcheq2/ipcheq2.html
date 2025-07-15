@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>//ipcheq2</title> <!--Change things here!-->
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <main class="main_content">
+        <h1 class="title">Troy Lopez</h1> <!--Change things here!-->
+        <nav class="header">
+            <a href="/menu/about.html">About</a>
+            <a href="/menu/blog.html">Blog</a>
+            <a href="/menu/projects.html">Projects</a>
+            <a href="/menu/links.html">Links</a>
+        </nav>
+        <h2>ipcheq2</h2>
+        <p class="date">Thrunting, optimized</p>
+        <p>Investigate IPs with data from Query AbuseIPDB, Spur, and the iCloud private relay list, all in one space.
+            Designed for SOC Ops, threat hunting, or triaging suspicious traffic, get quick insights into IP reputation,
+            behavior, and origin — all in one place. Designed for speed, simplicity, and practical decision-making.</p>
+        <h3>Setup and Sourcecode</h3>
+        <p>Check out the github <a href="https://github.com/TLop503/ipcheq2">here</a>. Or, get started with the official
+            docker image:</p>
+        <pre><code>
+    # supply an abuseipdb api key
+    docker run -p 8080:8080 -e ABIPDBKEY=your_api_key_here ghcr.io/tlop503/ipcheq2:latest</code></pre>
+        <hr>
+
+        <p class="date">7/14/25</p>
+    </main>
+</body>
+
+</html>

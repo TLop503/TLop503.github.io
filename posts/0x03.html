@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>/posts/0x03</title> <!--Change things here!-->
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <main class="main_content">
+        <h1 class="title">Troy Lopez</h1> <!--Change things here!-->
+        <nav class="header">
+            <a href="/menu/about.html">About</a>
+            <a href="/menu/blog.html">Blog</a>
+            <a href="/menu/projects.html">Projects</a>
+            <a href="/menu/links.html">Links</a>
+        </nav>
+    <h2>DAMCTF Author Writeup - breach Protocol</h2>
+    <p class="date">hack the mainframe, choom. eddies for days.</p>
+    <h3>Challenge Description:</h3>
+    <p>This challenge was inspired by the hacking minigame in Cyberpunk 2077. You have to select bytes out of an array to "spell out" a given string for various in-game currencies. Additionally, the direction you move (x/y) toggles with each selected byte. There are some red-herring strings given as examples, but players need to determine what combination to enter for the exploit.</p>
+    <p>Source code <a href="https://gitlab.com/osusec/damctf-2025-challenges/-/tree/main/misc/breach?ref_type=heads">here</a>.</p>
+    <img src="../assets/imgs/image2.png" alt="Screenshot of the challenge interface">
+
+    <h3>The Exploit</h3>
+    <p>First, we need to enumerate the server. The bytes in the array are specifically chosen, and translate to a small alphabet. Using these we can spell out "ls -R". This returns the following:</p>
+    
+    <pre><code>
+    BUFFER: [6C 73 20 2D 52 ]
+
+    DEBUG: AXIS: y
+    BREACH FAILED. ERROR:
+    .:
+    alft
+    altf
+    atfl
+    falt
+    flat
+    latf
+
+    ./alft:
+
+    ./altf:
+    flag
+
+    ./atfl:
+
+    ./falt:
+
+    ./flat:
+
+    ./latf:
+    </code></pre>
+    
+    <h3>Actions on Objectives</h3>
+    <p>Now we just need to string together the bytes for:</p>
+    <pre><code>
+    cd altf; cat flag
+    </code></pre>
+
+    <p>Punch this in for the flag!</p>
+
+    <h3>Player Writeups (in no particular order)</h3>
+    <ul>
+        <li>https://eddwastaken.github.io/posts/damctf-2025-breach/</li>
+        <li>https://k3sero.github.io/posts/Breach-Damctf2025/</li>
+        <li>https://anduinbrian.github.io/posts/writeups/damctf---2025/#miscbreach</li>
+    </ul>
+    <p>If you'd like your writeup added please reachout to tlop@tlop.xyz!</p>
+    <hr>
+    <p class="date">7/14/25</p>
+    </main>
+</body>
+</html>
