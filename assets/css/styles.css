@@ -52,6 +52,16 @@ h3 {
     font-style: oblique;
 }
 
+/* Hide underline on title link */
+.title a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.title a:hover {
+    text-decoration: none;
+}
+
 p,
 a,
 li {
