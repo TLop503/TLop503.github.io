@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>/posts/0x04</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <main class="main_content">
+        <h1 class="title"><a href="/index.html">Troy Lopez</a></h1>
+        <nav class="header">
+            <a href="/menu/about.html">About</a>
+            <a href="/menu/blog.html">Blog</a>
+            <a href="/menu/projects.html">Projects</a>
+            <a href="/menu/links.html">Links</a>
+        </nav>
+        <h2>Towards better log intake</h2>
+        <p class="date">log parsing is hard</p>
+        <hr>
+        <p>Currently, LogCrunch uses a format similar to <a href="https://github.com/ndjson/ndjson-spec">NDJSON</a>, but with 2x <code>\n</code> after each entry. Each entry uses this format:</p>
+        <pre><code>type Log struct {  
+    Host      string      `json:"host"`  
+    Timestamp int64       `json:"timestamp"`  
+    Type      string      `json:"type"`  
+    Payload   interface{} `json:"payload"`  
+}</code></pre>
+        <p>While this is fast, and simple to trace, it isn't really practical for data manipulation or querying. The original log is stored verbatim, and the metadata is sometimes redundant. No parsing of the log itself occurs, so accessing aspects of the log (payload) itself isn't possible without bespoke code. Any sort of query would require scanning the entire file, every time. The current solution evolved out of the need to send discrete entries across a channel to a single destination. While this method works, it doesn't give us anything to move off of, and doesn't "expose" anything we could leverage as an interface without custom wrappers. Additionally, with many endpoints this file will quickly get bulked down and begin draining performance.</p>
+        <p>While a new solution is needed, this current method isn't a complete waste; with consistent log rotation and compression this could work as a detailed, albeit verbose cold storage method.</p>
+        <h3>Existing Solutions</h3>
+        <p>LogCrunch aims to undercut the competition in log aggregation by staying lightweight and small. While proper enterprise SaaS is performant, it is extremely resource intensive, often rendering it infeasible for the small network or lab. However, that does not mean we can't learn from existing OSS solutions.</p>
+        <p>Elastic Search / the ELK stack use Apache Lucene under the surface for log storage<sup><a href="#ref1">[1]</a></sup>. Lucene is a full-text search engine library written in Java that utilizes inverted indexes. When a document (in our example, a log or set of logs) is written to disk, it's tokenized and each word is added to inverted index structures. This acts sort of like the index at the back of a textbook, where words are mapped to their appearances<sup><a href="#ref2">[2]</a></sup>. Logs are then stored in Segment files, immutable groups of indexes and documents. Segments are merged every so often for efficiency. This splits writing and reading across different files, helping with concurrency.</p>
+        <p>When a log is sent to Elasticsearch, it first is written to an in-memory buffer. It's then appended to a transaction log, to note its arrival, and later both are flushed from ram to disk as a Lucene segment. The generated indexes are split into shards of the whole, and duplicated for redundancy. This is designed for multi-server efficiency and scalability, but is luckily out of scope for our needs.</p>
+        <p>There's some good things we can take away from this. The inverted index method of storing documents should help improve our efficiency, and begin to introduce proper querying/parsing/filtering capabilities. However, the concept of shards and duplication are currently overkill for this small of a project. Also, it goes without saying, but introducing the JVM into this is a non-starter.</p>
+        <h3>Next Steps</h3>
+        <p>One of the caveats of existing solutions is the beefiness required by the SIEM server. To counteract this, we can distribute the actual computing necessary for log storage, by parsing <i>before</i> sending logs over the wire. Normalization and staging before transit means the server won't need to both think and write, it can focus on storage and querying without mutating along the way. While LogCrunch is currently built with dumb agents, this will need to change for an effective solution.</p>
+        <p>Log aggregation functions in waves. For each log event, it must be read and lexed by the agent. Then, this needs to be parsed into a standardized format for transit. Metadata can be attached, and the data is sent over the wire. In a perfect world, we can now stop thinking, and the server can just write to disk. Then, querying can occur disjunct from this process. There is only one elephant in the room-- alerting. If LogCrunch is to become a full SIEM, we'll need some ways to generate alerts based on behavior deduced from these logs. The metadata pass on agent log processing could potentially identify unexpected behaviors and create some sort of alert indicator, but at this point in time there is no good solution for multi-endpoint alert generation (that is, alerts including logs from multiple boxes). This presents a variety of challenges, but thankfully can wait until parsing is implemented.</p>
+        <h3>In conclusion</h3>
+        <p>Log parsing is hard. It would be great if everyone adhered to an RFC for log formatting, such as <a href="https://www.rfc-editor.org/rfc/rfc5424">RFC5424</a>, but this doesn't work for application-level logs. God I need sleep. Data-sickness is real.</p>
+        <h3>Update, a week later</h3>
+        <p>After getting some sleep, I have found a somewhat more elegant solution to the log parsing problem. My first approach to parsing required a different function for each type of log format, and then in a config file the user would map log file locations to functions. This is a decent solution, but it isn't expandable; If a user wants to add new formats, they would need to write more functions and then recompile. Additionally, having N functions for N formats slowly creeps up the size of the binary and the complexity of the logic, something we want to avoid. This can be alleviated by introducing a <i>meta-parser</i>, a parsing function given regular expression of the language used by the log files and a struct of desired output fields. This means that for N formats we need N regex, but only 1 function<sup><a href="#ref3">[3]</a></sup>. This drastically simplifies our logical flow and maximizes code reuse. To further optimize deployment, we can move these regexes out of the binary itself, into the configuration file. Now, instead of just mapping file paths to parsing functions, users can define a regex for parsing and a list of logs to parse with that format, allowing for theoretically endless parsing patterns with the same binary. This introduces a bit of overhead, as the configuration file must be validated before execution, but still reduces the amount of heft required to intake a large number of different logs.</p>
+        <h4>Potential Issues</h4>
+        <p>Allowing user-defined object creation and arbitrary file intake can be scary. An attacker could define an agent config that reads a sensitive file, for example <code>/etc/shadow</code>, and sends it to a SIEM server they control. Or, they could define extremely redundant log locations, and fork-bomb a machine by trying to watch an absurd number of files simultaneously. Preventing abuse of the SIEM agent will be an important step when hardening LogCrunch, and I'm actively working on mitigations to these risks.</p>
+        <h3>In conclusion, for real</h3>
+        <p>Log parsing isn't hard, there's just a lot to do. By opening up formatting to user-defined regex, LogCrunch won't need to be omniscient, just good enough out of the box. Rare or novel behavior can be defined at the configuration level by users, and plugged in at startup. Server-side intake and storage is still to be done, but functioning agents should help with determining database schema and general next steps.</p>
+        <hr>
+        <p><sup id="ref1">[1]</sup> <a href="https://discuss.elastic.co/t/where-does-elasticsearch-store-read-logs/323119">https://discuss.elastic.co/t/where-does-elasticsearch-store-read-logs/323119</a></p>
+        <p><sup id="ref2">[2]</sup> <a href="https://www.geeksforgeeks.org/dbms/inverted-index/">https://www.geeksforgeeks.org/dbms/inverted-index/</a></p>
+        <p><sup id="ref3">[3]</sup> Note binary logs such as <code>journalctl</code> still need unique parsing functions</p>
+        <p class="date">8/15/2025</p>
+    </main>
+</body>
+</html>
