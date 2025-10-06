@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>/posts/0x04</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <main class="main_content">
+        <h1 class="title"><a href="/index.html">Troy Lopez</a></h1>
+        <nav class="header">
+            <a href="/menu/about.html">About</a>
+            <a href="/menu/blog.html">Blog</a>
+            <a href="/menu/projects.html">Projects</a>
+            <a href="/menu/links.html">Links</a>
+        </nav>
+        <h2>Projects from Introduction to Graphics</h2>
+        <p class="date">Updated throughout the term!</p>
+        <hr>
+        <p>Here is a collection of my work from cs450 introduction to graphics. I figured I'd upload examples here for
+            fun, this isn't anything groundbreaking.</p>
+        <h3>Project 1 - "Draw something cool in 3d</h3>
+        <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ikBOIaOZv78?si=kL6zQ-1ZIvvG6zyq"
+            title="YouTube video player" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <p>
+            The background stars were made with 5000 spheres randomly distributed on the face of a 20-unit sphere. This
+            was done with the code below, using a modified version of the pythagorean theorem to garuntee a minimum
+            distance from the origin. Then, extra distance was added to space stars out more randomly to create
+            realistic-looking size differences.The UFO was created with an OSUSphere for the dome, and a series of
+            `GL_TRIANGLE_FAN` circles with offset center points to form basic cones for the body and tractor beam.
+        </p>
+        <pre><code>
+    // stars!
+    for (int i = 0; i < 5000; i++) {
+        float r = Ranf(0.7, 1.0);
+        float g = Ranf(0.7, 1.0);
+        float b = Ranf(0.7, 1.0);
+
+        glColor3f(r, g, b);
+
+        float x = Ranf(-1.f, 1.f);
+        float y = Ranf(-1.f, 1.f);
+        float z = Ranf(-1.f, 1.f);
+
+        float norm = std::sqrt(x * x + y * y + z * z);
+        x = STARRADIUS * x / norm;
+        y = STARRADIUS * y / norm;
+        z = STARRADIUS * z / norm;
+
+        STARRADIUS += 0.05;
+        
+        glPushMatrix();
+        glTranslatef(x, y, z);
+        OsuSphere(0.1, 10, 10);
+        glPopMatrix();
+    }
+    </code></pre>
+        <p class="date">10/06/2025</p>
+        <hr>
+    </main>
+</body>
+
+</html>
