@@ -26,7 +26,7 @@
         <p class="date">The Anonymous Traffic Classifier your SOC is missing</p>
         <img src="/media/ipcheq2.png" max-width="400px">
         <p>Investigate IPs with data from AbuseIPDB, VirusTotal, your own local VPNId, and the iCloud private relay list, all in one space. Self-host your own API for first-party VPN identification (optionally) without north-south traffic!</p>
-        <p>ipcheq2 builds a CIDR trie in memory at startup for constant-time lookups across the database. When queried, local classification data is enhanced with remote metadata from AbuseIPDB and VirusTotal, letting you see the whole story from one click.</p> 
+        <p>ipcheq2 builds a CIDR trie in memory at startup for constant-time lookups across the database. When queried, local classification data is enhanced with remote metadata from AbuseIPDB and VirusTotal, letting you see the whole story from one click.</p>
         <h3>Setup and Sourcecode</h3>
         <p>Check out the github <a href="https://github.com/TLop503/ipcheq2">here</a>. Or, get started with the official
             docker image:</p>
@@ -36,8 +36,8 @@
     \ -e ABIPDBKEY=your_api_key_here 
     \ -e VTKEY=your_api_key_here 
     \ ghcr.io/tlop503/ipcheq2:latest &lt;optional --mode webui|api|headless&gt;
-
-    <hr>
+        </code></pre>
+        <hr>
         <p class="date">4/8/2026</p>
     </main>
 </body>
